@@ -1,339 +1,202 @@
-const chatArea = document.getElementById("chatArea");
-const userInput = document.getElementById("userInput");
+const input = document.getElementById("userInput");
 const sendButton = document.getElementById("sendButton");
 const micButton = document.getElementById("micButton");
-const voiceStatus = document.getElementById("voiceStatus");
+const chatArea = document.getElementById("chatArea");
 const brainStatus = document.getElementById("brainStatus");
-const connectionText = document.getElementById("connectionText");
+const voiceStatus = document.getElementById("voiceStatus");
 
-const conversation = [];
+const SERVER_URL = "https://jarvis-v41-1.onrender.com";
 
-const CONFIG = {
-    serverURL: "/api/chat",
-    language: "pt-BR",
-    voice: true
-};
-
-
-/* =========================
-   MENSAGENS
-========================= */
-
-function addMessage(type, text) {
-
+function addMessage(text, type) {
     const message = document.createElement("div");
 
-    message.className =
-        type === "user"
-            ? "message user-message"
-            : "message jarvis-message";
+    message.className = `message ${type}-message`;
 
-    const label = document.createElement("div");
+    message.innerHTML = `
+        <div class="message-label">
+            ${type === "user" ? "VOCÊ" : "J.A.R.V.I.S."}
+        </div>
 
-    label.className = "message-label";
+        <div class="message-text"></div>
+    `;
 
-    label.textContent =
-        type === "user"
-            ? "VOCÊ"
-            : "J.A.R.V.I.S.";
-
-    const content = document.createElement("div");
-
-    content.className = "message-text";
-
-    content.textContent = text;
-
-    message.appendChild(label);
-    message.appendChild(content);
+    message.querySelector(".message-text").textContent = text;
 
     chatArea.appendChild(message);
 
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
+    message.scrollIntoView({
+        behavior: "smooth",
+        block: "end"
     });
 }
 
+async function sendMessage() {
 
-/* =========================
-   VOZ
-========================= */
+    const text = input.value.trim();
 
-function speak(text) {
+    if (!text) return;
 
-    if (!CONFIG.voice) return;
+    addMessage(text, "user");
 
-    if (!("speechSynthesis" in window)) return;
+    input.value = "";
 
-    speechSynthesis.cancel();
+    brainStatus.textContent = "PROCESSING...";
+    voiceStatus.textContent = "Consultando núcleo de inteligência...";
 
-    const voice = new SpeechSynthesisUtterance(text);
-
-    voice.lang = CONFIG.language;
-    voice.rate = 0.92;
-    voice.pitch = 0.82;
-    voice.volume = 1;
-
-    const voices = speechSynthesis.getVoices();
-
-    const ptVoice = voices.find(v =>
-        v.lang &&
-        v.lang.toLowerCase().includes("pt-br")
-    );
-
-    if (ptVoice) {
-        voice.voice = ptVoice;
-    }
-
-    speechSynthesis.speak(voice);
-}
-
-
-/* =========================
-   STATUS
-========================= */
-
-function status(text) {
-    brainStatus.textContent = text;
-}
-
-
-/* =========================
-   CÉREBRO
-========================= */
-
-async function askJarvis(message) {
-
-    status("PROCESSANDO...");
-
-    connectionText.textContent = "PROCESSING";
+    sendButton.disabled = true;
 
     try {
 
-        const response = await fetch(
-            CONFIG.serverURL,
-            {
-                method: "POST",
+        const response = await fetch(`${SERVER_URL}/api/chat`, {
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+            method: "POST",
 
-                body: JSON.stringify({
-                    message: message,
-                    history: conversation
-                })
-            }
-        );
+            headers: {
+                "Content-Type": "application/json"
+            },
 
+            body: JSON.stringify({
+                message: text
+            })
+
+        });
 
         const data = await response.json();
 
-
         if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                "Erro no servidor"
-            );
-
+            throw new Error(data.error || "Erro no servidor");
         }
 
+        const answer =
+            data.reply ||
+            data.response ||
+            "Não recebi uma resposta do núcleo de inteligência.";
 
-        if (!data.reply) {
+        addMessage(answer, "jarvis");
 
-            throw new Error(
-                "A IA não retornou resposta"
-            );
+        speak(answer);
 
-        }
-
-
-        conversation.push({
-            role: "user",
-            content: message
-        });
-
-        conversation.push({
-            role: "assistant",
-            content: data.reply
-        });
-
-
-        addMessage(
-            "jarvis",
-            data.reply
-        );
-
-
-        speak(data.reply);
-
-
-        status("NEURAL CORE READY");
-
-        connectionText.textContent =
-            "ONLINE";
-
+        brainStatus.textContent = "NEURAL CORE READY";
+        voiceStatus.textContent = "Sistema pronto";
 
     } catch (error) {
 
         console.error(error);
 
-
         addMessage(
-            "jarvis",
-            "Não consegui acessar meu núcleo de inteligência no momento."
+            "Não consegui acessar meu núcleo de inteligência no momento.",
+            "jarvis"
         );
 
+        brainStatus.textContent = "CONNECTION ERROR";
+        voiceStatus.textContent = "Erro de conexão com o servidor";
 
-        status("NEURAL CORE OFFLINE");
+    } finally {
 
-        connectionText.textContent =
-            "OFFLINE";
+        sendButton.disabled = false;
+
+        input.focus();
+
     }
 }
 
+function speak(text) {
 
-/* =========================
-   ENVIAR
-========================= */
+    if (!("speechSynthesis" in window)) return;
 
-async function sendMessage() {
+    speechSynthesis.cancel();
 
-    const text =
-        userInput.value.trim();
+    const speech = new SpeechSynthesisUtterance(text);
 
-    if (!text) return;
+    speech.lang = "pt-BR";
+    speech.rate = 0.95;
+    speech.pitch = 0.9;
 
-    addMessage(
-        "user",
-        text
-    );
-
-    userInput.value = "";
-
-    await askJarvis(text);
+    speechSynthesis.speak(speech);
 }
 
+sendButton.addEventListener("click", sendMessage);
 
-sendButton.addEventListener(
-    "click",
-    sendMessage
-);
+input.addEventListener("keydown", (event) => {
 
-
-/* =========================
-   ENTER
-========================= */
-
-userInput.addEventListener(
-    "keydown",
-    event => {
-
-        if (event.key === "Enter") {
-            sendMessage();
-        }
-
+    if (event.key === "Enter") {
+        sendMessage();
     }
-);
+
+});
 
 
-/* =========================
-   MICROFONE
-========================= */
+// MICROFONE
 
 const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
-let recognition = null;
-
-
 if (SpeechRecognition) {
 
-    recognition =
-        new SpeechRecognition();
+    const recognition = new SpeechRecognition();
 
     recognition.lang = "pt-BR";
-
     recognition.continuous = false;
-
     recognition.interimResults = false;
 
+    micButton.addEventListener("click", () => {
 
-    recognition.onstart = () => {
+        try {
 
-        micButton.classList.add(
-            "listening"
-        );
+            recognition.start();
 
-        voiceStatus.textContent =
-            "Ouvindo...";
+            micButton.classList.add("listening");
 
-        status(
-            "VOICE INPUT ACTIVE"
-        );
-    };
+            voiceStatus.textContent =
+                "Escutando...";
 
+        } catch (error) {
 
-    recognition.onresult = event => {
+            console.log(error);
+
+        }
+
+    });
+
+    recognition.onresult = (event) => {
 
         const text =
             event.results[0][0].transcript;
 
-        userInput.value = text;
+        input.value = text;
+
+        micButton.classList.remove("listening");
 
         voiceStatus.textContent =
             "Comando recebido";
 
         sendMessage();
-    };
 
+    };
 
     recognition.onerror = () => {
 
-        voiceStatus.textContent =
-            "Não consegui entender o áudio";
-    };
+        micButton.classList.remove("listening");
 
+        voiceStatus.textContent =
+            "Não consegui entender o comando";
+
+    };
 
     recognition.onend = () => {
 
-        micButton.classList.remove(
-            "listening"
-        );
+        micButton.classList.remove("listening");
 
-        voiceStatus.textContent =
-            "Toque no microfone para falar";
-
-        status(
-            "NEURAL CORE READY"
-        );
     };
-
-
-    micButton.addEventListener(
-        "click",
-        () => {
-
-            try {
-                recognition.start();
-            } catch (error) {
-                console.log(error);
-            }
-
-        }
-    );
 
 } else {
 
-    micButton.disabled = true;
+    micButton.addEventListener("click", () => {
 
-    voiceStatus.textContent =
-        "Reconhecimento de voz indisponível";
+        voiceStatus.textContent =
+            "Reconhecimento de voz não disponível neste navegador";
+
+    });
+
 }
-
-
-console.log(
-    "J.A.R.V.I.S. V4.1 iniciado"
-);
