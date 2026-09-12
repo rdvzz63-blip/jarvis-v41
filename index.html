@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>J.A.R.V.I.S. V4.1</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="background-grid"></div>
+
+    <header class="top-bar">
+
+        <div>
+            <div class="system-name">
+                J.A.R.V.I.S.
+            </div>
+
+            <div class="system-version">
+                AI CORE // V4.1
+            </div>
+        </div>
+
+        <div class="connection">
+            <span class="connection-dot"></span>
+            <span id="connectionText">
+                ONLINE
+            </span>
+        </div>
+
+    </header>
+
+
+    <main>
+
+        <section class="reactor-section">
+
+            <div class="reactor">
+
+                <div class="ring ring-1"></div>
+
+                <div class="ring ring-2"></div>
+
+                <div class="ring ring-3"></div>
+
+                <div class="reactor-core">
+
+                    <div class="core-light"></div>
+
+                    <div class="core-text">
+                        JARVIS
+                    </div>
+
+                    <div class="core-status">
+                        AI CORE
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="brain-status">
+                <span id="brainStatus">
+                    NEURAL CORE READY
+                </span>
+            </div>
+
+        </section>
+
+
+        <section
+            class="chat-area"
+            id="chatArea"
+        >
+
+            <div class="message jarvis-message">
+
+                <div class="message-label">
+                    J.A.R.V.I.S.
+                </div>
+
+                <div class="message-text">
+                    Sistema inicializado. Meu núcleo de inteligência está pronto.
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer class="control-panel">
+
+        <button
+            id="micButton"
+            class="control-button"
+        >
+
+            <span class="mic-icon">
+                🎙️
+            </span>
+
+        </button>
+
+
+        <input
+            type="text"
+            id="userInput"
+            placeholder="Digite um comando..."
+            autocomplete="off"
+        >
+
+
+        <button
+            id="sendButton"
+            class="send-button"
+        >
+            ➤
+        </button>
+
+    </footer>
+
+
+    <div
+        class="voice-status"
+        id="voiceStatus"
+    >
+        Toque no microfone para falar
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>h
